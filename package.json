@@ -1,17 +1,17 @@
 {
-    "name": "team-performance-excel-exporter",
+    "name": "excel-exporter",
     "version": "1.0.0",
     "license": "MIT",
     "main": "dist/index.js",
     "repository": {
         "type": "git",
-        "url": "https://bs-24-cicd.birkenstock.com/global-application/team-performance-excel-exporter"
+        "url": "https://github.com/MarcusCalidus/excel-exporter"
     },
     "author": {
         "name": "Marco Warm",
-        "email": "Marco.Warm@birkenstock.com"
+        "email": "MarcusCalidus@gmail.com"
     },
-    "description": "a generic Prometheus exporter for for Birkenstock Team Performance Excel files",
+    "description": "a generic Prometheus exporter for Excel files",
     "scripts": {
         "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
         "postinstall": "npm run build",
