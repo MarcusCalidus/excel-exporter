@@ -1,0 +1,25 @@
+targets:
+  - folder: /Users/marcowarm/Downloads/teams
+    metrics:
+      - name: team_output_target_quantity
+        metricType: gauge
+        help: output quantity expected by the team
+        worksheet: Tägliche Meldung
+        labels:
+          team:
+            reference: W2
+          schicht:
+            reference: N2
+        value:
+          reference: K30
+      - name: team_output_actual_quantity
+        metricType: gauge
+        help: output quantity expected by the team
+        worksheet: Tägliche Meldung
+        labels:
+          team:
+            reference: W2
+          schicht:
+            reference: N2
+        value:
+          reference: M30
