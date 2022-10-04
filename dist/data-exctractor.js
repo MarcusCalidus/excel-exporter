@@ -35,41 +35,47 @@ const fs = __importStar(require("fs"));
 class DataExtractor {
     getValues() {
         const settings = YamlJs.load(path_1.default.resolve(__dirname, '../config/settings.yaml'));
-        const xlsxFiles = fs.readdirSync(settings.targets[0].folder);
-        return (0, rxjs_1.of)(xlsxFiles)
-            .pipe((0, rxjs_1.mergeMap)(files => files), (0, rxjs_1.mergeMap)(xlsxFile => {
-            return new rxjs_1.Observable(subscriber => {
-                const workbook = new ExcelJS.Workbook();
-                workbook.xlsx.readFile(path_1.default.resolve(settings.targets[0].folder, xlsxFile))
-                    .then(() => {
-                    settings.targets[0].metrics.forEach((metricSetting) => {
-                        const worksheet = workbook.getWorksheet(metricSetting.worksheet);
-                        const labels = [];
-                        for (const key in metricSetting.labels) {
-                            if (metricSetting.labels.hasOwnProperty(key)) {
-                                labels.push(key + '="' +
-                                    worksheet.getCell(metricSetting.labels[key].reference).value + '"');
-                            }
-                        }
-                        let cellValue = worksheet.getCell(metricSetting.value.reference).value;
-                        if (cellValue instanceof Object) {
-                            cellValue = cellValue.result;
-                        }
-                        const metric = {
-                            metric: {
-                                name: metricSetting.name,
-                                help: metricSetting.help,
-                                metricType: metricSetting.metricType,
-                            },
-                            labels,
-                            value: cellValue
-                        };
-                        subscriber.next([metric]);
-                    });
-                })
-                    .then(() => subscriber.complete());
-            });
+        return (0, rxjs_1.of)(settings.targets)
+            .pipe((0, rxjs_1.mergeMap)(targets => targets), (0, rxjs_1.mergeMap)((target) => {
+            const xlsxFiles = fs.readdirSync(target.folder);
+            return (0, rxjs_1.of)(xlsxFiles)
+                .pipe((0, rxjs_1.mergeMap)(files => files), (0, rxjs_1.mergeMap)(xlsxFile => {
+                return new rxjs_1.Observable(this.handleXlsxFile(target, xlsxFile));
+            }));
         }));
+    }
+    handleXlsxFile(target, xlsxFile) {
+        return (subscriber) => {
+            const workbook = new ExcelJS.Workbook();
+            workbook.xlsx.readFile(path_1.default.resolve(target.folder, xlsxFile))
+                .then(() => {
+                target.metrics.forEach((metricSetting) => {
+                    const worksheet = workbook.getWorksheet(metricSetting.worksheet);
+                    const labels = [];
+                    for (const key in metricSetting.labels) {
+                        if (metricSetting.labels.hasOwnProperty(key)) {
+                            labels.push(key + '="' +
+                                worksheet.getCell(metricSetting.labels[key].reference).value + '"');
+                        }
+                    }
+                    let cellValue = worksheet.getCell(metricSetting.value.reference).value;
+                    if (cellValue instanceof Object) {
+                        cellValue = cellValue.result;
+                    }
+                    const metric = {
+                        metric: {
+                            name: metricSetting.name,
+                            help: metricSetting.help,
+                            metricType: metricSetting.metricType,
+                        },
+                        labels,
+                        value: cellValue
+                    };
+                    subscriber.next([metric]);
+                });
+            })
+                .then(() => subscriber.complete());
+        };
     }
 }
 exports.DataExtractor = DataExtractor;

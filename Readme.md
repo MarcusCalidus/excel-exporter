@@ -1,7 +1,7 @@
 # excel-exporter - a Prometheus exporter for Excel files
 
 Excel-exporter is a generic Prometheus exporter for 
- Excel files. It will iterate all files in one folder finding values and labels on a spreadsheet.
+ Excel files. It will iterate all files in all target folders finding values and labels on a spreadsheet.
 
 ## Prerequisites
 In order to run excel-exporter you need Node.js installed on your system.

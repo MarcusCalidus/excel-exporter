@@ -8,65 +8,75 @@ export class DataExtractor {
     getValues(): Observable<any> {
         const settings = YamlJs.load(path.resolve(__dirname, '../config/settings.yaml'));
 
-        const xlsxFiles: string[] = fs.readdirSync(settings.targets[0].folder);
-        return of(xlsxFiles)
+        return of(settings.targets)
             .pipe(
-                mergeMap(files => files),
-                mergeMap(
-                    xlsxFile => {
-                        return new Observable<any[]>(subscriber => {
-                                const workbook = new ExcelJS.Workbook();
-
-                                workbook.xlsx.readFile(path.resolve(settings.targets[0].folder, xlsxFile))
-                                    .then(
-                                        () => {
-                                            settings.targets[0].metrics.forEach(
-                                                (metricSetting: any) => {
-                                                    const worksheet = workbook.getWorksheet(metricSetting.worksheet);
-
-                                                    const labels = [];
-
-                                                    for (const key in metricSetting.labels) {
-                                                        if (metricSetting.labels.hasOwnProperty(key)) {
-                                                            labels.push(
-                                                                key + '="' +
-                                                                worksheet.getCell(
-                                                                    metricSetting.labels[key].reference
-                                                                ).value + '"'
-                                                            );
-                                                        }
-                                                    }
-
-                                                    let cellValue = worksheet.getCell(
-                                                        metricSetting.value.reference
-                                                    ).value;
-
-                                                    if (cellValue instanceof Object) {
-                                                        cellValue = (cellValue as any).result;
-                                                    }
-
-                                                    const metric = {
-                                                        metric: {
-                                                            name: metricSetting.name,
-                                                            help: metricSetting.help,
-                                                            metricType: metricSetting.metricType,
-                                                        },
-                                                        labels,
-                                                        value: cellValue
-                                                    }
-
-                                                    subscriber.next([metric]);
-                                                }
-                                            )
-                                        }
+                mergeMap(targets => targets),
+                mergeMap( (target: any) => {
+                    const xlsxFiles: string[] = fs.readdirSync(target.folder);
+                    return of(xlsxFiles)
+                        .pipe(
+                            mergeMap(files => files),
+                            mergeMap(
+                                xlsxFile => {
+                                    return new Observable<any[]>(this.handleXlsxFile(target, xlsxFile)
                                     )
-                                    .then(
-                                        () => subscriber.complete()
-                                    )
+                                }
+                            )
+                        )
+                })
+            )
+    }
+
+    private handleXlsxFile<A>(target: any, xlsxFile: string) {
+        return (subscriber: any) => {
+            const workbook = new ExcelJS.Workbook();
+
+            workbook.xlsx.readFile(path.resolve(target.folder, xlsxFile))
+                .then(
+                    () => {
+                        target.metrics.forEach(
+                            (metricSetting: any) => {
+                                const worksheet = workbook.getWorksheet(metricSetting.worksheet);
+
+                                const labels = [];
+
+                                for (const key in metricSetting.labels) {
+                                    if (metricSetting.labels.hasOwnProperty(key)) {
+                                        labels.push(
+                                            key + '="' +
+                                            worksheet.getCell(
+                                                metricSetting.labels[key].reference
+                                            ).value + '"'
+                                        );
+                                    }
+                                }
+
+                                let cellValue = worksheet.getCell(
+                                    metricSetting.value.reference
+                                ).value;
+
+                                if (cellValue instanceof Object) {
+                                    cellValue = (cellValue as any).result;
+                                }
+
+                                const metric = {
+                                    metric: {
+                                        name: metricSetting.name,
+                                        help: metricSetting.help,
+                                        metricType: metricSetting.metricType,
+                                    },
+                                    labels,
+                                    value: cellValue
+                                }
+
+                                subscriber.next([metric]);
                             }
                         )
                     }
                 )
-            )
+                .then(
+                    () => subscriber.complete()
+                )
+        };
     }
 }

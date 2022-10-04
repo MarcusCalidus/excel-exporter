@@ -2,3 +2,4 @@
 /src/config*.ts
 /.idea
 /config/webservice.yaml
+/config/settings.yaml
