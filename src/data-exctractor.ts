@@ -1,4 +1,4 @@
-import {mergeMap, Observable, of} from 'rxjs';
+import {mergeMap, Observable, of, Subscriber} from 'rxjs';
 import * as ExcelJS from 'exceljs'
 import * as YamlJs from 'yamljs';
 import path from 'path';
@@ -12,14 +12,16 @@ export class DataExtractor {
             .pipe(
                 mergeMap(targets => targets),
                 mergeMap( (target: any) => {
-                    const xlsxFiles: string[] = fs.readdirSync(target.folder);
+                    const xlsxFiles: string[] = fs
+                        .readdirSync(target.folder)
+                        .filter((a: string) => a.match(target.filePattern));
+
                     return of(xlsxFiles)
                         .pipe(
                             mergeMap(files => files),
                             mergeMap(
                                 xlsxFile => {
-                                    return new Observable<any[]>(this.handleXlsxFile(target, xlsxFile)
-                                    )
+                                    return new Observable<any[]>(this.handleXlsxFile(target, xlsxFile))
                                 }
                             )
                         )
@@ -28,7 +30,7 @@ export class DataExtractor {
     }
 
     private handleXlsxFile<A>(target: any, xlsxFile: string) {
-        return (subscriber: any) => {
+        return (subscriber: Subscriber<any>) => {
             const workbook = new ExcelJS.Workbook();
 
             workbook.xlsx.readFile(path.resolve(target.folder, xlsxFile))
@@ -39,43 +41,54 @@ export class DataExtractor {
                                 const worksheet = workbook.getWorksheet(metricSetting.worksheet);
 
                                 const labels = [];
-
-                                for (const key in metricSetting.labels) {
-                                    if (metricSetting.labels.hasOwnProperty(key)) {
-                                        labels.push(
-                                            key + '="' +
-                                            worksheet.getCell(
-                                                metricSetting.labels[key].reference
-                                            ).value + '"'
-                                        );
+                                if (worksheet) {
+                                    for (const key in metricSetting.labels) {
+                                        if (metricSetting.labels.hasOwnProperty(key)) {
+                                            labels.push(
+                                                key + '="' +
+                                                worksheet.getCell(
+                                                    metricSetting.labels[key].reference
+                                                ).value + '"'
+                                            );
+                                        }
                                     }
+
+                                    let cellValue = worksheet.getCell(
+                                        metricSetting.value.reference
+                                    ).value;
+
+                                    if (cellValue instanceof Object) {
+                                        cellValue = (cellValue as any).result;
+                                    }
+
+                                    if (!cellValue) {
+                                        cellValue = 0
+                                    }
+
+                                    const metric = {
+                                        metric: {
+                                            name: metricSetting.name,
+                                            help: metricSetting.help,
+                                            metricType: metricSetting.metricType,
+                                        },
+                                        labels,
+                                        value: cellValue
+                                    }
+
+                                    subscriber.next([metric]);
                                 }
-
-                                let cellValue = worksheet.getCell(
-                                    metricSetting.value.reference
-                                ).value;
-
-                                if (cellValue instanceof Object) {
-                                    cellValue = (cellValue as any).result;
-                                }
-
-                                const metric = {
-                                    metric: {
-                                        name: metricSetting.name,
-                                        help: metricSetting.help,
-                                        metricType: metricSetting.metricType,
-                                    },
-                                    labels,
-                                    value: cellValue
-                                }
-
-                                subscriber.next([metric]);
                             }
                         )
                     }
                 )
                 .then(
                     () => subscriber.complete()
+                )
+                .catch(
+                    (error) => {
+                        console.error(error);
+                        subscriber.error(error);
+                    }
                 )
         };
     }

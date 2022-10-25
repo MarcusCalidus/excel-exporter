@@ -21,6 +21,7 @@ You will have to create a `settings.yaml` before you can start the server!
 ```
 targets:
   - folder: /Users/marcowarm/Downloads/teams
+    filePattern: .*\.xlsx
     metrics:
       - name: team_output_target_quantity
         metricType: gauge
