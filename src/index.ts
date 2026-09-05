@@ -3,7 +3,7 @@ import {DataExtractor} from './data-exctractor';
 import {catchError, EMPTY, toArray} from 'rxjs';
 
 const serverPort = 9973;
-const app = express();
+export const app = express();
 const dataExtractor = new DataExtractor();
 
 app.get('/valuesJson', (req, res) => {
@@ -55,7 +55,9 @@ app.get('/values', (req, res) => {
         );
 });
 
-// start the Express server
-app.listen(serverPort, () => {
-    console.log(`server started at http://localhost:${serverPort}`);
-});
+// start the Express server, unless this module was imported (e.g. by tests) rather than run directly
+if (require.main === module) {
+    app.listen(serverPort, () => {
+        console.log(`server started at http://localhost:${serverPort}`);
+    });
+}
