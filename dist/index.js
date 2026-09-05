@@ -3,13 +3,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.app = void 0;
 const express_1 = __importDefault(require("express"));
 const data_exctractor_1 = require("./data-exctractor");
 const rxjs_1 = require("rxjs");
 const serverPort = 9973;
-const app = (0, express_1.default)();
+exports.app = (0, express_1.default)();
 const dataExtractor = new data_exctractor_1.DataExtractor();
-app.get('/valuesJson', (req, res) => {
+exports.app.get('/valuesJson', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     dataExtractor.getValues().pipe((0, rxjs_1.toArray)(), (0, rxjs_1.catchError)(error => {
         res.statusCode = 500;
@@ -20,7 +21,7 @@ app.get('/valuesJson', (req, res) => {
         res.end(JSON.stringify({ success: true, data }));
     });
 });
-app.get('/values', (req, res) => {
+exports.app.get('/values', (req, res) => {
     res.setHeader('Content-Type', 'text/plain;charset=utf-8');
     dataExtractor.getValues().pipe((0, rxjs_1.toArray)(), (0, rxjs_1.catchError)(error => {
         res.statusCode = 500;
@@ -40,8 +41,10 @@ app.get('/values', (req, res) => {
         res.end(error.toString());
     });
 });
-// start the Express server
-app.listen(serverPort, () => {
-    console.log(`server started at http://localhost:${serverPort}`);
-});
+// start the Express server, unless this module was imported (e.g. by tests) rather than run directly
+if (require.main === module) {
+    exports.app.listen(serverPort, () => {
+        console.log(`server started at http://localhost:${serverPort}`);
+    });
+}
 //# sourceMappingURL=index.js.map
