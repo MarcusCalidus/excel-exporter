@@ -29,7 +29,7 @@ export class DataExtractor {
             )
     }
 
-    private handleXlsxFile<A>(target: any, xlsxFile: string) {
+    private handleXlsxFile(target: any, xlsxFile: string) {
         return (subscriber: Subscriber<any>) => {
             const workbook = new ExcelJS.Workbook();
 
@@ -43,7 +43,7 @@ export class DataExtractor {
                                 const labels = [];
                                 if (worksheet) {
                                     for (const key in metricSetting.labels) {
-                                        if (metricSetting.labels.hasOwnProperty(key)) {
+                                        if (Object.prototype.hasOwnProperty.call(metricSetting.labels, key)) {
                                             labels.push(
                                                 key + '="' +
                                                 worksheet.getCell(
